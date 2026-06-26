@@ -1,0 +1,6 @@
+name: SeedBag
+version: 1.0.0
+main: dev.seedbag.plugin.SeedBagPlugin
+api-version: 1.20
+author: SeedBagDev
+description: Seed Bag that plants 5x5 area
