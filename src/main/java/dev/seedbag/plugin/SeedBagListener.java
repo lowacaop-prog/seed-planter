@@ -47,6 +47,10 @@ public class SeedBagListener implements Listener {
 
     public SeedBagListener(SeedBagPlugin plugin) { this.plugin = plugin; }
 
+    private boolean isEmpty(ItemStack item) { return item == null || item.getType() == Material.AIR; }
+    private boolean isWaterBucket(ItemStack item) { return item != null && item.getType() == Material.WATER_BUCKET; }
+    private boolean isIronBlock32(ItemStack item) { return item != null && item.getType() == Material.IRON_BLOCK && item.getAmount() == 32; }
+
     @EventHandler
     public void onPrepareCraft(PrepareItemCraftEvent event) {
         ItemStack[] matrix = event.getInventory().getMatrix();
@@ -59,17 +63,24 @@ public class SeedBagListener implements Listener {
             if (item.getType() == Material.DIAMOND_HOE) { hasDiamond = true; continue; }
             if (SeedBagItems.isUniqueSeed(item)) uniqueSeedCount++;
         }
-        // Check for infinite water bucket (3 water buckets + iron block with 32 amount)
-        int waterBuckets = 0;
-        boolean hasIronBlock32 = false;
-        for (ItemStack item : matrix) {
-            if (item == null || item.getType() == Material.AIR) continue;
-            if (item.getType() == Material.WATER_BUCKET) waterBuckets++;
-            if (item.getType() == Material.IRON_BLOCK && item.getAmount() >= 32) hasIronBlock32 = true;
-        }
-        if (waterBuckets == 3 && hasIronBlock32) {
-            event.getInventory().setResult(SeedBagItems.createInfiniteWaterBucket());
-            return;
+        // Check for infinite water bucket — strict shape:
+        // [air][W  ][W  ]
+        // [W  ][I32][air]
+        // [air][air][air]
+        // slots: 1=W, 2=W, 3=W, 4=I(32), rest=air
+        if (matrix.length == 9) {
+            ItemStack s0 = matrix[0], s1 = matrix[1], s2 = matrix[2];
+            ItemStack s3 = matrix[3], s4 = matrix[4], s5 = matrix[5];
+            ItemStack s6 = matrix[6], s7 = matrix[7], s8 = matrix[8];
+            boolean waterPattern =
+                isEmpty(s0) &&
+                isWaterBucket(s1) && isWaterBucket(s2) &&
+                isWaterBucket(s3) && isIronBlock32(s4) && isEmpty(s5) &&
+                isEmpty(s6) && isEmpty(s7) && isEmpty(s8);
+            if (waterPattern) {
+                event.getInventory().setResult(SeedBagItems.createInfiniteWaterBucket());
+                return;
+            }
         }
         if (hasDiamond && uniqueSeedCount == 8) {
             event.getInventory().setResult(SeedBagItems.createFiveHoe());
