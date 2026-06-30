@@ -280,7 +280,8 @@ public class SeedBagListener implements Listener {
         event.setCancelled(true);
         // Place water on the block face clicked
         Block target = event.getClickedBlock().getRelative(event.getBlockFace());
-        if (target.getType() == Material.AIR || target.getType().isAir()) {
+        if (target.getType() == Material.AIR || target.getType().isAir() ||
+            target.getType() == Material.WATER || !target.getType().isSolid()) {
             target.setType(Material.WATER);
             player.getWorld().playSound(target.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1f, 1f);
         }
